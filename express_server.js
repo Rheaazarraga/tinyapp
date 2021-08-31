@@ -4,8 +4,14 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 
 
-const generateRandomString = function () {
-  return (Math.random() + 1).toString(36).substr(6);
+const generateRandomString = () => {
+  let randomString = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const stringLength = 6;
+  for (let i = 0; i < stringLength; i++) {
+    randomString += characters[Math.floor(Math.random() * characters.length)];
+  }
+  return randomString;
 };
 
 app.set("view engine", "ejs");
@@ -51,8 +57,27 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  let shortURL = generateRandomString();
+  let longURL = req.body.longURL;
+  //console.log(longURL);
+  urlDatabase[shortURL] = longURL; //adding new entry to the array?? with an index of shortURL and value of longURL
+  //console.log(urlDatabase);  // Log the POST request body to the console
+  res.redirect(`/urls/${shortURL}`) //making get request
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  let shortURL = req.params.shortURL; 
+  delete urlDatabase[shortURL]
+  res.redirect("/urls/");
+});
+
+app.get("/u/:shortURL", (req, res) => { //  anything /u is anything the user types which we will save in req.params : means its unique - comes back as the key
+  const shortURL = req.params.shortURL;
+  //console.log(shortURL);
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
+  //console.log(req.params);
 });
 
 //PORT LISTENER
