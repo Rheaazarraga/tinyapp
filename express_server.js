@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-
+const cookieParser = require("cookie-parser");
 
 const generateRandomString = () => {
   let randomString = "";
@@ -15,9 +15,9 @@ const generateRandomString = () => {
 };
 
 app.set("view engine", "ejs");
-app.use(express.urlencoded({extended: true})); //added this & line 13 because bodyParser kept deprecating
+app.use(express.urlencoded({extended: true}));
 app.use(express.json());
-
+app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca", //shortURL : longURL
@@ -35,7 +35,9 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase,
+  username: req.cookies['username'] 
+};
   res.render("urls_index", templateVars);
 });
 
@@ -59,11 +61,8 @@ app.get("/hello", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
-  //console.log(longURL);
-  urlDatabase[shortURL] = longURL; //adding new entry to the array?? with an index of shortURL and value of longURL
-  //console.log(urlDatabase);  // Log the POST request body to the console
-  res.redirect(`/urls/${shortURL}`); //making get request
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -78,12 +77,20 @@ app.post("/urls/:shortURL/update", (req, res) => {
   res.redirect("/urls/");
 });
 
-app.get("/u/:shortURL", (req, res) => { //  anything /u is anything the user types which we will save in req.params : means its unique - comes back as the key
+app.post("/login/", (req,res) => {
+res.cookie('username', req.body.username)
+res.redirect("/urls/");
+});
+
+app.post("/logout/", (req,res) => {
+  res.clearCookie('username', req.body.username)
+  res.redirect("/urls/");
+  });
+
+app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  //console.log(shortURL);
   const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
-  //console.log(req.params);
 });
 
 //PORT LISTENER
