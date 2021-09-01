@@ -72,6 +72,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls/");
 });
 
+app.post("/urls/:shortURL/update", (req, res) => {
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.newlongURL
+res.redirect("/urls/");
+});
+
 app.get("/u/:shortURL", (req, res) => { //  anything /u is anything the user types which we will save in req.params : means its unique - comes back as the key
   const shortURL = req.params.shortURL;
   //console.log(shortURL);
