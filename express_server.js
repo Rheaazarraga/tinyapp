@@ -16,7 +16,7 @@ const generateRandomString = () => {
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true})); //added this & line 13 because bodyParser kept deprecating
-app.use(express.json())
+app.use(express.json());
 
 
 const urlDatabase = {
@@ -62,20 +62,20 @@ app.post("/urls", (req, res) => {
   //console.log(longURL);
   urlDatabase[shortURL] = longURL; //adding new entry to the array?? with an index of shortURL and value of longURL
   //console.log(urlDatabase);  // Log the POST request body to the console
-  res.redirect(`/urls/${shortURL}`) //making get request
+  res.redirect(`/urls/${shortURL}`); //making get request
   //res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let shortURL = req.params.shortURL; 
-  delete urlDatabase[shortURL]
+  let shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
   res.redirect("/urls/");
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.newlongURL
-res.redirect("/urls/");
+  urlDatabase[shortURL] = req.body.newURL;
+  res.redirect("/urls/");
 });
 
 app.get("/u/:shortURL", (req, res) => { //  anything /u is anything the user types which we will save in req.params : means its unique - comes back as the key
