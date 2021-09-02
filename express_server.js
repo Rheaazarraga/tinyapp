@@ -14,14 +14,29 @@ const generateRandomString = () => {
   return randomString;
 };
 
+// MIDDLEWARE
 app.set("view engine", "ejs");
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(cookieParser());
 
+// FEED DATA
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca", //shortURL : longURL
   "9sm5xK": "http://www.google.com",
+};
+
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
 };
 
 //GET ROUTE HANDLERS
@@ -36,14 +51,14 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase,
-  username: req.cookies['username'] 
+  userID: req.cookies['userID'] 
 };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: 'username'
+    userID: 'userID'
   };
   res.render("urls_new", templateVars);
 });
@@ -52,7 +67,7 @@ app.get("/urls/:shortURL", (req, res) => {
   // ':' indicates the ID is a route parameter
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  const templateVars = { longURL: longURL, shortURL: shortURL, username: 'username' };
+  const templateVars = { longURL: longURL, shortURL: shortURL, userID: 'userID' };
   res.render("urls_show", templateVars);
 });
 
@@ -68,7 +83,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: req.cookies['username']
+    userID: req.cookies['userID']
   };
   res.render("user_registration", templateVars);
 });
@@ -95,17 +110,18 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login/", (req,res) => {
-res.cookie('username', req.body.username)
+res.cookie('userID', req.body.userID)
 res.redirect("/urls/");
 });
 
 app.post("/logout/", (req,res) => {
-  res.clearCookie('username', req.body.username)
+  res.clearCookie('userID', req.body.userID)
   res.redirect("/urls/");
   });
 
   app.post("/register", (req, res) => {
-
+  //const newuserID
+    res.redirect("/urls/");
   });
 
 //PORT LISTENER
