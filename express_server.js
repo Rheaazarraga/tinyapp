@@ -41,22 +41,32 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: 'username'
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   // ':' indicates the ID is a route parameter
   let shortURL = req.params.shortURL;
   let longURL = urlDatabase[shortURL];
-  const templateVars = { longURL: longURL, shortURL: shortURL };
+  const templateVars = { longURL: longURL, shortURL: shortURL, username: 'username' };
   res.render("urls_show", templateVars);
 });
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
+});
+
+// POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
@@ -71,7 +81,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls/");
 });
 
-app.post("/urls/:shortURL/update", (req, res) => {
+app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = req.body.newURL;
   res.redirect("/urls/");
@@ -86,12 +96,6 @@ app.post("/logout/", (req,res) => {
   res.clearCookie('username', req.body.username)
   res.redirect("/urls/");
   });
-
-app.get("/u/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
-  res.redirect(longURL);
-});
 
 //PORT LISTENER
 
