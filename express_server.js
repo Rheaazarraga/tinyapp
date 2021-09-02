@@ -50,8 +50,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const user_id = req.cookies.user_id;
+  console.log('user_id-----', user_id);
   const templateVars = { urls: urlDatabase,
-  userID: req.cookies['userID'] 
+  userID: req.cookies['userID'],
+  user: users[user_id]
 };
   res.render("urls_index", templateVars);
 });
@@ -111,17 +114,24 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 app.post("/login/", (req,res) => {
 res.cookie('userID', req.body.userID)
-res.redirect("/urls/");
+res.redirect("/urls");
 });
 
 app.post("/logout/", (req,res) => {
   res.clearCookie('userID', req.body.userID)
-  res.redirect("/urls/");
+  res.redirect("/urls");
   });
 
   app.post("/register", (req, res) => {
-  //const newuserID
-    res.redirect("/urls/");
+  let ID =  generateRandomString();
+  users[ID] = {
+    id: ID,
+    email: req.body.email,
+    password: req.body.password
+  };
+  res.cookie('user_id', ID);
+  console.log('users----',users);
+    res.redirect("/urls");
   });
 
 //PORT LISTENER
