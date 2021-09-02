@@ -66,6 +66,13 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies['username']
+  };
+  res.render("user_registration", templateVars);
+});
+
 // POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
@@ -95,6 +102,10 @@ res.redirect("/urls/");
 app.post("/logout/", (req,res) => {
   res.clearCookie('username', req.body.username)
   res.redirect("/urls/");
+  });
+
+  app.post("/register", (req, res) => {
+
   });
 
 //PORT LISTENER
