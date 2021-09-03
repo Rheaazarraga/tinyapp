@@ -123,6 +123,16 @@ app.post("/logout/", (req,res) => {
   });
 
   app.post("/register", (req, res) => {
+    let email = req.body.email;
+    if (!req.body.email || !req.body.password) {
+      return res.status(400).send('The email or password was left empty. Please try again.');
+    }
+    for (const user in users) {
+    if (users[user].email === email) {
+      return res.status(400).send ('An account already exists.');
+      }
+    };
+
   let ID =  generateRandomString();
   users[ID] = {
     id: ID,
