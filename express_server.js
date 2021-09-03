@@ -91,6 +91,13 @@ app.get("/register", (req, res) => {
   res.render("user_registration", templateVars);
 });
 
+app.get("/login", (req, res) => {
+const templateVars = {
+  userID: req.cookies['userID']
+}
+  res.render("user_login", templateVars);
+});
+
 // POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
