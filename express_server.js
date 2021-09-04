@@ -22,16 +22,22 @@ app.use(express.json());
 app.use(cookieParser());
 
 // FEED DATA
+
+// const urlDatabase = {
+//   b2xVn2: "http://www.lighthouselabs.ca", //shortURL : longURL
+//   "9sm5xK": "http://www.google.com",
+// };
+
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca", //shortURL : longURL
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
 };
 
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -60,16 +66,19 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["userID"]) {
+    return res.redirect("/login");
+  } 
   const templateVars = {
     userID: req.cookies["userID"],
     user: users[req.cookies["userID"]],
   };
-  res.render("urls_new", templateVars);
+    res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  let longURL = urlDatabase[shortURL];
+  let longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
     longURL: longURL,
     shortURL: shortURL,
@@ -85,7 +94,7 @@ app.get("/hello", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -166,7 +175,7 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: req.body.password,
   };
-  res.cookie("user_id", ID);
+  res.cookie("userID", ID);
   res.redirect("/urls");
 });
 
