@@ -128,18 +128,18 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 app.post("/login", (req, res) => {
   let email = req.body.email;
-  console.log("reguest body", req.body);
   let password = req.body.password;
   for (const user in users) {
-    if (users[user].email !== email) {
-      return res.status(403).send("Status: 403 An account does not exist.");
+    if (users[user].email === email) {
+      if (users[user].password === password) {
+        res.cookie("userID", users[user].id);
+        return res.redirect("/urls");
+      } else {
+        return res.status(403).send("You have entered the wrong password.");
+      }
     }
-    if (users[user].password === password) {
-      res.cookie("userID", users[user].id);
-      return res.redirect("/urls");
-    }
-    return res.status(403).send("You have entered the wrong password.");
   }
+  return res.status(403).send("Status: 403 An account does not exist.");
 });
 
 app.post("/logout", (req, res) => {
@@ -167,7 +167,6 @@ app.post("/register", (req, res) => {
     password: req.body.password,
   };
   res.cookie("user_id", ID);
-  console.log("users----", users);
   res.redirect("/urls");
 });
 
