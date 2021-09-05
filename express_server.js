@@ -1,48 +1,31 @@
-
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const cookieSession = require('cookie-session')
-
-const generateRandomString = () => {
-  let randomString = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const stringLength = 6;
-  for (let i = 0; i < stringLength; i++) {
-    randomString += characters[Math.floor(Math.random() * characters.length)];
-  }
-  return randomString;
-};
+const cookieSession = require("cookie-session");
+const {
+  getUserByEmail,
+  urlsForUser,
+  generateRandomString,
+} = require("./helper_funcs");
 
 // MIDDLEWARE
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cookieSession({
-  name: "session",
-  keys: ['key1', 'key2']
-}));
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["key1", "key2"],
+  })
+);
 
 // FEED DATA
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "userRandomID" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "user2RandomID" },
-};
-
-//helper function which returns urls where the userID is equal to the id of the currently logged in user
-
-const urlsForUser = function(userID) {
-  const filteredURLS = {};
-  for (let shortURL in urlDatabase) {
-    if (userID === urlDatabase[shortURL].userID) {
-      filteredURLS[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return filteredURLS;
 };
 
 const users = {
@@ -61,20 +44,20 @@ const users = {
 //GET ROUTE HANDLERS
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// temporary endpoint to visually view the current urlDatabase
+// Temporary endpoint to visually view the current urlDatabase
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// temporary endpoint to visually view the current users
+// Temporary endpoint to visually view the current users
 
 app.get("/users.json", (req, res) => {
   res.json(users);
@@ -84,7 +67,7 @@ app.get("/urls", (req, res) => {
   if (!req.session.userID) {
   }
   const templateVars = {
-    urls: urlsForUser(req.session.userID),
+    urls: urlsForUser(urlDatabase, req.session.userID),
     userID: req.session.userID,
     user: users[req.session.userID],
   };
@@ -114,7 +97,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if (req.session.userID !== urlDatabase[shortURL].userID) {
     const templateVars = {
       user: users[req.session.userID],
-      error: "Oops! You are not authorized to edit this!"
+      error: "Oops! You are not authorized to edit this!",
     };
     res.status(403).render("errors", templateVars);
   }
@@ -127,10 +110,6 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
@@ -139,7 +118,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.session.userID]
+    user: users[req.session.userID],
   };
   res.render("user_registration", templateVars);
 });
@@ -147,11 +126,21 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const templateVars = {
     userID: null,
-    user: users[req.session.userID]
+    user: users[req.session.userID],
   };
   res.render("user_login", templateVars);
 });
 
+app.get("*", function (req, res) {
+  const templateVars = {
+    user: users[req.session.userID],
+    error:
+      "Status 404: This page does not exist!  Please click one of the links above!",
+  };
+  return res.status(404).render("errors", templateVars);
+});
+
+// POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
   if (!req.session.userID) {
@@ -171,7 +160,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   } else {
     const templateVars = {
       user: users[req.session.userID],
-      error: "You are not authorized to delete this"
+      error: "You are not authorized to delete this",
     };
     return res.status(400).render("errors", templateVars);
   }
@@ -189,25 +178,30 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  for (const user in users) {
-    if (users[user].email === email) {
-      if (bcrypt.compareSync(password, users[user].password)) {
-        req.session.userID = user;
-        return res.redirect("/urls");
-      } else {
-        const templateVars = {
-          user: users[req.session.userID],
-          error: "You have entered the wrong password."
-        };
-        return res.status(403).render("errors", templateVars);
-      }
-    }
+  const userID = getUserByEmail(email, users);
+  if (!email || !password) {
+    const templateVars = {
+      user: users[req.session.userID],
+      error: "Status 400: You have left a field empty",
+    };
+    return res.status(400).render("errors", templateVars);
   }
-  const templateVars = {
-    user: users[req.session.userID],
-    error: "Status: 403 An account does not exist"
-  };
-  return res.status(403).render("errors", templateVars);
+  if (!userID) {
+    const templateVars = {
+      user: users[req.session.userID],
+      error: "An account does not exist!",
+    };
+    return res.status(403).render("errors", templateVars);
+  }
+  if (!bcrypt.compareSync(password, users[userID].password)) {
+    const templateVars = {
+      user: users[req.session.userID],
+      error: "You have entered the wrong password.",
+    };
+    return res.status(403).render("errors", templateVars);
+  }
+  req.session.userID = userID;
+  return res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
@@ -220,18 +214,18 @@ app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     const templateVars = {
       user: users[null],
-      error: "The email or password was left empty. Please try again."
+      error: "The email or password was left empty. Please try again.",
     };
     return res.status(403).render("errors", templateVars);
   }
-  for (const user in users) {
-    if (users[user].email === email) {
-      const templateVars = {
-        user: users[null],
-        error: "The account already exists."
-      };
-      return res.status(400).render("errors", templateVars);
-    }
+
+  const userID = getUserByEmail(email, users);
+  if (userID) {
+    const templateVars = {
+      user: users[null],
+      error: "The account already exists.",
+    };
+    return res.status(400).render("errors", templateVars);
   }
 
   const ID = generateRandomString();
