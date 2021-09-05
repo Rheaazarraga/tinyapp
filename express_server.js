@@ -1,16 +1,18 @@
+//  -------------------- PORT -------------------- //
+
+const PORT = 8080; // default port
+
+// -------------------- DEPENDENCIES -------------------- //
+
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require("cookie-session");
-const {
-  getUserByEmail,
-  urlsForUser,
-  generateRandomString,
-} = require("./helper_funcs");
+const { getUserByEmail, urlsForUser, generateRandomString } = require("./helper_funcs");
 
-// MIDDLEWARE
+// -------------------- MIDDLEWARE -------------------- //
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -21,7 +23,7 @@ app.use(
   })
 );
 
-// FEED DATA
+// -------------------- FEED DATA -------------------- //
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "userRandomID" },
@@ -41,7 +43,7 @@ const users = {
   },
 };
 
-//GET ROUTE HANDLERS
+// -------------------- GET ROUTE HANDLERS -------------------- //
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
@@ -51,7 +53,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// Temporary endpoint to visually view the current urlDatabase
+// --- Temporary endpoint to visually view the current urlDatabase --- //
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -63,6 +65,7 @@ app.get("/users.json", (req, res) => {
   res.json(users);
 });
 
+// --- Route that renders the main page --- //
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlsForUser(urlDatabase, req.session.userID),
@@ -72,6 +75,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// --- Route which renders the create a new URL page, but redirects the user if  they are not logged in --- //
 app.get("/urls/new", (req, res) => {
   if (!req.session.userID) {
     return res.redirect("/login");
@@ -83,6 +87,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+// --- Route to direct the user to their modified shortURL page with Edit, or an error code if the user tries to change a URL that doesn't belong to them --- //
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL]) {
@@ -108,12 +113,14 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// --- Route which manages the shortURL link and redirects the user to the associated longURL page --- //
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
+// --- Route that renders the Sign Up page --- //
 app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.session.userID],
@@ -121,6 +128,7 @@ app.get("/register", (req, res) => {
   res.render("user_registration", templateVars);
 });
 
+// --- Route that renders the Login page --- //
 app.get("/login", (req, res) => {
   const templateVars = {
     userID: null,
@@ -129,6 +137,7 @@ app.get("/login", (req, res) => {
   res.render("user_login", templateVars);
 });
 
+// --- Route that redirects the user to an error page if they try to navigate to a link that doesn't exist --- //
 app.get("*", (req, res) => {
   const templateVars = {
     user: users[req.session.userID],
@@ -138,8 +147,9 @@ app.get("*", (req, res) => {
   return res.status(404).render("errors", templateVars);
 });
 
-// POST ROUTE HANDLERS
+// -------------------- POST ROUTE HANDLERS -------------------- //
 
+// --- Post request which adds a new random generated shortURL to the URLs page, and redirects the user to login if they aren't already --- //
 app.post("/urls", (req, res) => {
   if (!req.session.userID) {
     return res.redirect("/login");
@@ -150,6 +160,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+// --- Post request to delete an existing URL only if the URL belongs to that user --- //
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   if (req.session.userID === urlDatabase[shortURL].userID) {
@@ -164,6 +175,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+// --- Post request to edit an existing URL but only if it belongs to that user, redirects to URLs page otherwise --- //
 app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
   if (req.session.userID !== urlDatabase[shortURL].userID) {
@@ -173,6 +185,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect("/urls/");
 });
 
+// --- Post request to login: Checks for valid login credentials before allowing the user to login. If login is successful, redirects to URLs page --- ///
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -202,11 +215,13 @@ app.post("/login", (req, res) => {
   return res.redirect("/urls");
 });
 
+// --- Post request to logout of users account and deletes their cookie upon logout --- //
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
 });
 
+// --- Post request to Sign Up for a new account - checks required fields are entered and if an account already exists --- //
 app.post("/register", (req, res) => {
   const email = req.body.email;
   if (!req.body.email || !req.body.password) {
@@ -226,7 +241,10 @@ app.post("/register", (req, res) => {
     return res.status(400).render("errors", templateVars);
   }
 
+  // --- Generates a new alphanumeric ID for the user --- //
   const ID = generateRandomString();
+
+  // --- Converts the plain-text password to an unintelligible string with a salt --- //
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
   users[ID] = {
@@ -238,7 +256,7 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-//PORT LISTENER
+// -------------------- PORT LISTENER -------------------- //
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
