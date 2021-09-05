@@ -3,7 +3,6 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-//const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require('cookie-session')
 
@@ -22,7 +21,6 @@ const generateRandomString = () => {
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-//app.use(cookieParser());
 app.use(cookieSession({
   name: "session",
   keys: ['key1', 'key2']
@@ -141,7 +139,6 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    // user: users[req.cookies["userID"]],
     user: users[req.session.userID]
   };
   res.render("user_registration", templateVars);
@@ -150,7 +147,6 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const templateVars = {
     userID: null,
-    //user: users[req.cookies["userID"]],
     user: users[req.session.userID]
   };
   res.render("user_login", templateVars);
@@ -196,7 +192,6 @@ app.post("/login", (req, res) => {
   for (const user in users) {
     if (users[user].email === email) {
       if (bcrypt.compareSync(password, users[user].password)) {
-        //res.cookie("userID", users[user].id);
         req.session.userID = user;
         return res.redirect("/urls");
       } else {
@@ -216,7 +211,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  //res.clearCookie("userID", users[req.cookies.userID]);
   req.session = null;
   res.redirect("/urls");
 });
@@ -225,7 +219,6 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   if (!req.body.email || !req.body.password) {
     const templateVars = {
-      //user: users[req.cookies["userID"]],
       user: users[null],
       error: "The email or password was left empty. Please try again."
     };
@@ -234,7 +227,6 @@ app.post("/register", (req, res) => {
   for (const user in users) {
     if (users[user].email === email) {
       const templateVars = {
-        // user: users[req.cookies["userID"]],
         user: users[null],
         error: "The account already exists."
       };
@@ -250,7 +242,6 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: hashedPassword,
   };
-  //res.cookie("userID", ID);
   req.session.userID = ID;
   res.redirect("/urls");
 });
