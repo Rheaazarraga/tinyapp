@@ -1,9 +1,11 @@
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+//const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
+const cookieSession = require('cookie-session')
 
 const generateRandomString = () => {
   let randomString = "";
@@ -20,11 +22,11 @@ const generateRandomString = () => {
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cookieParser());
-// app.use(cookieSession({
-//   name: "session",
-//   keys: ['key1', 'key2']
-// }));
+//app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ['key1', 'key2']
+}));
 
 // FEED DATA
 
@@ -81,24 +83,23 @@ app.get("/users.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.cookies["userID"]) {
-    //return res.redirect("/login");
+  if (!req.session.userID) {
   }
   const templateVars = {
-    urls: urlsForUser(req.cookies["userID"]),
-    userID: req.cookies["userID"],
-    user: users[req.cookies["userID"]],
+    urls: urlsForUser(req.session.userID),
+    userID: req.session.userID,
+    user: users[req.session.userID],
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session.userID) {
     return res.redirect("/login");
   }
   const templateVars = {
-    userID: req.cookies["userID"],
-    user: users[req.cookies["userID"]],
+    userID: req.session.userID,
+    user: users[req.session.userID],
   };
   res.render("urls_new", templateVars);
 });
@@ -107,15 +108,14 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (!urlDatabase[shortURL]) {
     const templateVars = {
-      user: users[req.cookies["userID"]],
+      user: users[req.session.userID],
       error: "This is not a valid link!",
     };
     return res.status(403).render("errors", templateVars);
   }
-  if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
-    //return res.send("You are not authorized to edit this");
+  if (req.session.userID !== urlDatabase[shortURL].userID) {
     const templateVars = {
-      user: users[req.cookies["userID"]],
+      user: users[req.session.userID],
       error: "Oops! You are not authorized to edit this!"
     };
     res.status(403).render("errors", templateVars);
@@ -124,8 +124,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     longURL: longURL,
     shortURL: shortURL,
-    userID: req.cookies["userID"],
-    user: users[req.cookies["userID"]],
+    user: users[req.session.userID],
   };
   res.render("urls_show", templateVars);
 });
@@ -142,8 +141,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    userID: req.cookies["userID"],
-    user: users[req.cookies["userID"]],
+    // user: users[req.cookies["userID"]],
+    user: users[req.session.userID]
   };
   res.render("user_registration", templateVars);
 });
@@ -151,50 +150,40 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const templateVars = {
     userID: null,
-    user: users[req.cookies["userID"]],
+    //user: users[req.cookies["userID"]],
+    user: users[req.session.userID]
   };
   res.render("user_login", templateVars);
 });
 
-// app.get("/error", (req, res) => {
-//   const error = req.params.error;
-//   const templateVars = {
-//     user: users[req.cookies["userID"]],
-//     error: error,
-//   };
-//   res.render("errors", templateVars);
-// });
-
-// POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies["userID"]) {
+  if (!req.session.userID) {
     return res.redirect("/login");
   }
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL: longURL, userID: req.cookies["userID"] };
+  urlDatabase[shortURL] = { longURL: longURL, userID: req.session.userID };
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (req.cookies["userID"] === urlDatabase[shortURL].userID) {
+  if (req.session.userID === urlDatabase[shortURL].userID) {
     delete urlDatabase[shortURL];
     res.redirect("/urls/");
   } else {
     const templateVars = {
-      user: users[req.cookies["userID"]],
+      user: users[req.session.userID],
       error: "You are not authorized to delete this"
     };
     return res.status(400).render("errors", templateVars);
-    //res.send("You are not authorized to delete this");
   }
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
+  if (req.session.userID !== urlDatabase[shortURL].userID) {
     return res.send("You are not authorized to edit this");
   }
   urlDatabase[shortURL].longURL = req.body.newURL;
@@ -206,30 +195,29 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   for (const user in users) {
     if (users[user].email === email) {
-      //if (users[user].password === password) {
       if (bcrypt.compareSync(password, users[user].password)) {
-        res.cookie("userID", users[user].id);
+        //res.cookie("userID", users[user].id);
+        req.session.userID = user;
         return res.redirect("/urls");
       } else {
         const templateVars = {
-          user: users[req.cookies["userID"]],
+          user: users[req.session.userID],
           error: "You have entered the wrong password."
         };
         return res.status(403).render("errors", templateVars);
-        //return res.status(403).send("You have entered the wrong password.");
       }
     }
   }
   const templateVars = {
-    user: users[req.cookies["userID"]],
+    user: users[req.session.userID],
     error: "Status: 403 An account does not exist"
   };
   return res.status(403).render("errors", templateVars);
-  //return res.status(403).send("Status: 403 An account does not exist.");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("userID", users[req.cookies.userID]);
+  //res.clearCookie("userID", users[req.cookies.userID]);
+  req.session = null;
   res.redirect("/urls");
 });
 
@@ -237,18 +225,17 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   if (!req.body.email || !req.body.password) {
     const templateVars = {
-      user: users[req.cookies["userID"]],
+      //user: users[req.cookies["userID"]],
+      user: users[null],
       error: "The email or password was left empty. Please try again."
     };
     return res.status(403).render("errors", templateVars);
   }
-  // return res
-  //   .status(400)
-  //   .send("The email or password was left empty. Please try again.");
   for (const user in users) {
     if (users[user].email === email) {
       const templateVars = {
-        user: users[req.cookies["userID"]],
+        // user: users[req.cookies["userID"]],
+        user: users[null],
         error: "The account already exists."
       };
       return res.status(400).render("errors", templateVars);
@@ -263,7 +250,8 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: hashedPassword,
   };
-  res.cookie("userID", ID);
+  //res.cookie("userID", ID);
+  req.session.userID = ID;
   res.redirect("/urls");
 });
 
