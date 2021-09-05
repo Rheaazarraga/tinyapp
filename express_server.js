@@ -23,17 +23,12 @@ app.use(cookieParser());
 
 // FEED DATA
 
-// const urlDatabase = {
-//   b2xVn2: "http://www.lighthouselabs.ca", //shortURL : longURL
-//   "9sm5xK": "http://www.google.com",
-// };
-
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "userRandomID" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "user2RandomID" },
 };
 
-//HELPER FUNCTION WHICH RETURNS URLS WHERE THE userID IS EQUAL TO THE ID OF THE CURRENTLY LOGGED-IN USER
+//helper function which returns urls where the userID is equal to the id of the currently logged in user
 
 const urlsForUser = function (userID) {
   const filteredURLS = {};
@@ -71,11 +66,13 @@ app.get("/urls.json", (req, res) => {
 });
 
 // temporary endpoint to visually view the current urlDatabase
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
 // temporary endpoint to visually view the current users
+
 app.get("/users.json", (req, res) => {
   res.json(users);
 });
@@ -87,7 +84,6 @@ app.get("/urls", (req, res) => {
   }
   const templateVars = {
     urls: urlsForUser(req.cookies["userID"]),
-    //urlDatabase,
     userID: req.cookies["userID"],
     user: users[req.cookies["userID"]],
   };
