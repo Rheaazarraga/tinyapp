@@ -35,7 +35,7 @@ const urlDatabase = {
 
 //helper function which returns urls where the userID is equal to the id of the currently logged in user
 
-const urlsForUser = function (userID) {
+const urlsForUser = function(userID) {
   const filteredURLS = {};
   for (let shortURL in urlDatabase) {
     if (userID === urlDatabase[shortURL].userID) {
@@ -242,16 +242,16 @@ app.post("/register", (req, res) => {
     };
     return res.status(403).render("errors", templateVars);
   }
-    // return res
-    //   .status(400)
-    //   .send("The email or password was left empty. Please try again.");
+  // return res
+  //   .status(400)
+  //   .send("The email or password was left empty. Please try again.");
   for (const user in users) {
     if (users[user].email === email) {
       const templateVars = {
         user: users[req.cookies["userID"]],
         error: "The account already exists."
       };
-      return res.status(400).render("errors", templateVars)
+      return res.status(400).render("errors", templateVars);
     }
   }
 
