@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 const generateRandomString = () => {
   let randomString = "";
@@ -49,12 +49,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "$2b$10$0J4eqL5cPAoGOZGI/VnSo./dw7PDAxOtG31SSWKn7s3M7YVTMXvaC" //password "123",
+    password: "$2b$10$0J4eqL5cPAoGOZGI/VnSo./dw7PDAxOtG31SSWKn7s3M7YVTMXvaC", //password "123",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "$2b$10$g1Eh4pYUfDbmih9/yEVa3OOrTVNgG1BLSJ3xXNs8nd0YVV9dkZJTu" //password "lol",
+    password: "$2b$10$g1Eh4pYUfDbmih9/yEVa3OOrTVNgG1BLSJ3xXNs8nd0YVV9dkZJTu", //password "lol",
   },
 };
 
@@ -105,10 +105,22 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
-    return res.send("You are not authorized to edit this");
+  if (!urlDatabase[shortURL]) {
+    const templateVars = {
+      user: users[req.cookies["userID"]],
+      error: "This is not a valid link!",
+    };
+    return res.status(403).render("errors", templateVars);
   }
+  if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
+    //return res.send("You are not authorized to edit this");
+    const templateVars = {
+      user: users[req.cookies["userID"]],
+      error: "Oops! You are not authorized to edit this!"
+    };
+    res.status(403).render("errors", templateVars);
+  }
+  const longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
     longURL: longURL,
     shortURL: shortURL,
@@ -144,6 +156,15 @@ app.get("/login", (req, res) => {
   res.render("user_login", templateVars);
 });
 
+// app.get("/error", (req, res) => {
+//   const error = req.params.error;
+//   const templateVars = {
+//     user: users[req.cookies["userID"]],
+//     error: error,
+//   };
+//   res.render("errors", templateVars);
+// });
+
 // POST ROUTE HANDLERS
 
 app.post("/urls", (req, res) => {
@@ -162,7 +183,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     delete urlDatabase[shortURL];
     res.redirect("/urls/");
   } else {
-    res.send("You are not authorized to delete this");
+    const templateVars = {
+      user: users[req.cookies["userID"]],
+      error: "You are not authorized to delete this"
+    };
+    return res.status(400).render("errors", templateVars);
+    //res.send("You are not authorized to delete this");
   }
 });
 
@@ -181,15 +207,25 @@ app.post("/login", (req, res) => {
   for (const user in users) {
     if (users[user].email === email) {
       //if (users[user].password === password) {
-        if (bcrypt.compareSync(password, users[user].password)){
+      if (bcrypt.compareSync(password, users[user].password)) {
         res.cookie("userID", users[user].id);
         return res.redirect("/urls");
       } else {
-        return res.status(403).send("You have entered the wrong password.");
+        const templateVars = {
+          user: users[req.cookies["userID"]],
+          error: "You have entered the wrong password."
+        };
+        return res.status(403).render("errors", templateVars);
+        //return res.status(403).send("You have entered the wrong password.");
       }
     }
   }
-  return res.status(403).send("Status: 403 An account does not exist.");
+  const templateVars = {
+    user: users[req.cookies["userID"]],
+    error: "Status: 403 An account does not exist"
+  };
+  return res.status(403).render("errors", templateVars);
+  //return res.status(403).send("Status: 403 An account does not exist.");
 });
 
 app.post("/logout", (req, res) => {
@@ -200,13 +236,22 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   if (!req.body.email || !req.body.password) {
-    return res
-      .status(400)
-      .send("The email or password was left empty. Please try again.");
+    const templateVars = {
+      user: users[req.cookies["userID"]],
+      error: "The email or password was left empty. Please try again."
+    };
+    return res.status(403).render("errors", templateVars);
   }
+    // return res
+    //   .status(400)
+    //   .send("The email or password was left empty. Please try again.");
   for (const user in users) {
     if (users[user].email === email) {
-      return res.status(400).send("An account already exists.");
+      const templateVars = {
+        user: users[req.cookies["userID"]],
+        error: "The account already exists."
+      };
+      return res.status(400).render("errors", templateVars)
     }
   }
 
