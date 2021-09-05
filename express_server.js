@@ -64,8 +64,6 @@ app.get("/users.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  if (!req.session.userID) {
-  }
   const templateVars = {
     urls: urlsForUser(urlDatabase, req.session.userID),
     userID: req.session.userID,
@@ -131,7 +129,7 @@ app.get("/login", (req, res) => {
   res.render("user_login", templateVars);
 });
 
-app.get("*", function (req, res) {
+app.get("*", (req, res) => {
   const templateVars = {
     user: users[req.session.userID],
     error:
