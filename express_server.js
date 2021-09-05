@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require('bcrypt');
 
 const generateRandomString = () => {
   let randomString = "";
@@ -20,6 +21,10 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+// app.use(cookieSession({
+//   name: "session",
+//   keys: ['key1', 'key2']
+// }));
 
 // FEED DATA
 
@@ -32,12 +37,10 @@ const urlDatabase = {
 
 const urlsForUser = function (userID) {
   const filteredURLS = {};
-  console.log(userID);
   for (let shortURL in urlDatabase) {
     if (userID === urlDatabase[shortURL].userID) {
       filteredURLS[shortURL] = urlDatabase[shortURL];
     }
-    console.log("test---", filteredURLS);
   }
   return filteredURLS;
 };
@@ -46,12 +49,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "123",
+    password: "$2b$10$0J4eqL5cPAoGOZGI/VnSo./dw7PDAxOtG31SSWKn7s3M7YVTMXvaC" //password "123",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "lol",
+    password: "$2b$10$g1Eh4pYUfDbmih9/yEVa3OOrTVNgG1BLSJ3xXNs8nd0YVV9dkZJTu" //password "lol",
   },
 };
 
@@ -76,7 +79,6 @@ app.get("/urls.json", (req, res) => {
 app.get("/users.json", (req, res) => {
   res.json(users);
 });
-
 
 app.get("/urls", (req, res) => {
   if (!req.cookies["userID"]) {
@@ -105,7 +107,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
-    return res.send("You are not authorized to edit this"); 
+    return res.send("You are not authorized to edit this");
   }
   const templateVars = {
     longURL: longURL,
@@ -148,16 +150,14 @@ app.post("/urls", (req, res) => {
   if (!req.cookies["userID"]) {
     return res.redirect("/login");
   }
-  let shortURL = generateRandomString();
-  let longURL = req.body.longURL;
-  console.log("here");
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL: longURL, userID: req.cookies["userID"] };
-  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let shortURL = req.params.shortURL;
+  const shortURL = req.params.shortURL;
   if (req.cookies["userID"] === urlDatabase[shortURL].userID) {
     delete urlDatabase[shortURL];
     res.redirect("/urls/");
@@ -169,18 +169,19 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL/edit", (req, res) => {
   const shortURL = req.params.shortURL;
   if (req.cookies["userID"] !== urlDatabase[shortURL].userID) {
-    return res.send("You are not authorized to edit this"); 
+    return res.send("You are not authorized to edit this");
   }
   urlDatabase[shortURL].longURL = req.body.newURL;
   res.redirect("/urls/");
 });
 
 app.post("/login", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
+  const email = req.body.email;
+  const password = req.body.password;
   for (const user in users) {
     if (users[user].email === email) {
-      if (users[user].password === password) {
+      //if (users[user].password === password) {
+        if (bcrypt.compareSync(password, users[user].password)){
         res.cookie("userID", users[user].id);
         return res.redirect("/urls");
       } else {
@@ -197,7 +198,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  let email = req.body.email;
+  const email = req.body.email;
   if (!req.body.email || !req.body.password) {
     return res
       .status(400)
@@ -209,11 +210,13 @@ app.post("/register", (req, res) => {
     }
   }
 
-  let ID = generateRandomString();
+  const ID = generateRandomString();
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+
   users[ID] = {
     id: ID,
     email: req.body.email,
-    password: req.body.password,
+    password: hashedPassword,
   };
   res.cookie("userID", ID);
   res.redirect("/urls");
