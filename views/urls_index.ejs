@@ -24,6 +24,12 @@
         </tr>
       </thead>
       <tbody>
+        <% if(Object.keys(urls).length===0) { %>
+          <div class="alert alert-info">
+            <strong>Error!</strong> Please Register/Login and create URLs in order to see them below!
+          </div>
+          <% } %>
+
         <% for(let url in urls) { %>
           <tr>
             <td>
@@ -34,7 +40,7 @@
             </td>
             <td>
               <form method="GET" action="/urls/<%=url%>">
-                <button type="submit" class="btn btn-outline-primary">Edit</button>
+                <button type="submit" class="btn btn-info">Edit</button>
               </form>
               </td>
               <td>
