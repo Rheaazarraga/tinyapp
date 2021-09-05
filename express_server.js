@@ -83,8 +83,7 @@ app.get("/users.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   if (!req.cookies["userID"]) {
-    return res.redirect("/login");
-    // res.send ("<html><body> You must log in to see your URLS </body></html>\n")
+    //return res.redirect("/login");
   }
   const templateVars = {
     urls: urlsForUser(req.cookies["userID"]),
