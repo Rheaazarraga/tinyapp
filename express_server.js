@@ -100,9 +100,9 @@ app.get("/urls/:shortURL", (req, res) => {
   if (req.session.userID !== urlDatabase[shortURL].userID) {
     const templateVars = {
       user: users[req.session.userID],
-      error: "Oops! You are not authorized to edit this!",
+      error: "You are not authorized to edit this!",
     };
-    res.status(403).render("errors", templateVars);
+    return res.status(403).render("errors", templateVars);
   }
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
@@ -141,8 +141,7 @@ app.get("/login", (req, res) => {
 app.get("*", (req, res) => {
   const templateVars = {
     user: users[req.session.userID],
-    error:
-      "Status 404: This page does not exist!  Please click one of the links above!",
+    error: "Status 404: This page does not exist!  Please click one of the links above!",
   };
   return res.status(404).render("errors", templateVars);
 });
