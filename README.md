@@ -7,9 +7,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 This project by [Rhea Azarraga](https://github.com/Rheaazarraga) is created as part of the [Lighthouse Labs](https://github.com/lighthouse-labs) curriculum. It is not intended for professional use.
 
 ## Final Product
----
-!["screenshot description"](#)
-!["screenshot description"](#)
+
 
 ## Dependencies
 ---
