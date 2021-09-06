@@ -14,7 +14,7 @@ const { getUserByEmail, urlsForUser, generateRandomString } = require("./helper_
 // -------------------- MIDDLEWARE -------------------- //
 
 app.set("view engine", "ejs");
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); //body-parser substitute
 app.use(express.json());
 app.use(
   cookieSession({
