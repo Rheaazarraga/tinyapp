@@ -31,8 +31,10 @@
           <% } %>
 
           <% if(Object.keys(urls).length===0 && user) { %>
-            <div class="alert alert-info">
-              <strong>You currently have no URLS to display</strong>
+              <div class="alert alert-info alert-dismissible">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                <strong>You currently have no URLs to display</strong> 
+              </div>
             </div>
             <% } %>
 
