@@ -12,10 +12,10 @@
     "url": "git+https://github.com/Rheaazarraga/tinyapp.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Rhea Azarraga",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Rheaazarraga/tinyapp/issues"
+    "url": "https://github.com/Rheaazarraga/tinyapp"
   },
   "homepage": "https://github.com/Rheaazarraga/tinyapp#readme",
   "dependencies": {
